@@ -761,13 +761,69 @@ Utilise le navigateur Playwright pour auditer l'accessibilité :
 
 ---
 
-### 5e. Intégration MCP — Playwright (Copilot contrôle un navigateur)
+### 5e. Intégration MCP — Configurer from scratch + Playwright
 
 **Ce que c'est** : Un serveur MCP (Model Context Protocol) qui donne à Copilot la capacité de piloter un navigateur web réel.
 
-**Pré-requis** : Le serveur de l'app doit tourner (`npm run dev`).
+#### 🔬 Manipulation — Configurer un MCP server pas à pas
 
-#### 🔬 Manipulation — Voir Copilot interagir avec l'app
+**Étape 1** — Ouvrir ou créer `.vscode/mcp.json` :
+```
+Ctrl+Shift+P → MCP: Open User Configuration
+```
+Ou manuellement : `Ctrl+P` → `mcp.json`
+
+**Étape 2** — Si le fichier n'existait pas, écrire la structure de base :
+```json
+{
+  "mcp": {
+    "servers": {
+
+    }
+  }
+}
+```
+
+**Étape 3** — Ajouter le serveur Playwright :
+```json
+{
+  "mcp": {
+    "servers": {
+      "playwright": {
+        "command": "npx",
+        "args": ["@playwright/mcp@latest"]
+      }
+    }
+  }
+}
+```
+
+**Étape 4** — Sauvegarder (`Ctrl+S`). VS Code détecte automatiquement le nouveau serveur.
+
+**Étape 5** — Vérifier l'activation :
+```
+Ctrl+Shift+P → MCP: List Servers
+```
+Vous devez voir :
+```
+✅ playwright — Ready
+   Tools: navigate, click, fill, screenshot, hover, select, ...
+```
+
+**Étape 6** — Si le statut est "Not Started", cliquer sur "Start" ou :
+```
+Ctrl+Shift+P → MCP: Start Server → playwright
+```
+
+**⚠️ Pré-requis** : Playwright doit être installé :
+```powershell
+# Terminal VS Code (Ctrl+`)
+npx playwright install chromium
+```
+
+#### 🔬 Manipulation — Voir Copilot utiliser le MCP
+
+**Pré-requis** : Le serveur de l'app doit tourner (`npm run dev`).
 
 **Étape 1** — Vérifier que l'app tourne :
 ```powershell
@@ -802,32 +858,38 @@ Utilise le navigateur Playwright pour :
 - La tâche "Tâche créée par Copilot MCP" visible dans l'app
 - Message de confirmation de Copilot
 
+#### 🔬 Manipulation — Désactiver le MCP et voir la différence
+
+**Étape 1** — Désactiver le MCP :
+```
+Ctrl+Shift+P → MCP: Stop Server → playwright
+```
+
+**Étape 2** — Même prompt dans Copilot Chat (mode Agent) :
+```
+Utilise le navigateur Playwright pour aller sur http://localhost:3000 et prendre un screenshot
+```
+
+**Étape 3** — Observer : Copilot ne peut PAS exécuter l'action. Il va :
+- Soit dire qu'il n'a pas accès au navigateur
+- Soit proposer du CODE Playwright à exécuter manuellement
+
+**Étape 4** — Réactiver :
+```
+Ctrl+Shift+P → MCP: Start Server → playwright
+```
+
 #### 📊 Comment voir l'effet
 
-| Sans MCP Playwright | Avec MCP Playwright |
-|--------------------|---------------------|
-| "Voici le code Playwright pour tester..." | Copilot EXÉCUTE le test en live |
-| Vous devez copier/coller et lancer | Résultat immédiat avec screenshots |
-| Pas de vérification visuelle | Preuves visuelles dans le chat |
+| MCP Status | Comportement Copilot | Résultat |
+|-----------|---------------------|----------|
+| ✅ Started | EXÉCUTE les actions (navigate, click, screenshot) | Screenshots + résultats réels |
+| ❌ Stopped | Génère du CODE à copier/coller | Pas d'exécution, théorique |
 
 **Si ça ne marche pas** :
 - Vérifier : `Ctrl+Shift+P` → `MCP: List Servers` → Playwright = "Ready"
 - Vérifier : `npm run dev` tourne dans un terminal
 - Recharger VS Code si nécessaire (`Ctrl+Shift+P` → `Developer: Reload Window`)
-
-**Configuration** (déjà en place dans `.vscode/mcp.json`) :
-```json
-{
-  "mcp": {
-    "servers": {
-      "playwright": {
-        "command": "npx",
-        "args": ["@playwright/mcp@latest"]
-      }
-    }
-  }
-}
-```
 
 ---
 
@@ -837,45 +899,81 @@ Utilise le navigateur Playwright pour :
 
 **Pré-requis** : Docker doit tourner.
 
-#### 🔬 Manipulation
+#### 🔬 Manipulation — Ajouter un 2ème MCP server pas à pas
 
 **Étape 1** — Vérifier Docker :
 ```powershell
+# Terminal VS Code (Ctrl+`)
 docker ps
 ```
+Si Docker n'est pas installé, passer à l'alternative sans Docker (étape 7).
 
-**Étape 2** — Ouvrir Copilot Chat en mode **Agent**
+**Étape 2** — Ouvrir `.vscode/mcp.json` (`Ctrl+P` → `mcp.json`)
 
-**Étape 3** — Taper :
-```
-Utilise awesome-copilot pour rechercher des instructions disponibles pour Node.js et Express
-```
-
-**Étape 4** — Observer : Copilot interroge le MCP, affiche les résultats disponibles dans la communauté
-
-**Étape 5** — Demander à installer un résultat :
-```
-Installe l'instruction "nodejs" depuis awesome-copilot dans mon projet
-```
-
-#### 📊 Comment voir l'effet
-
-| Sans MCP awesome-copilot | Avec MCP awesome-copilot |
-|--------------------------|--------------------------|
-| Chercher manuellement sur GitHub | Copilot cherche pour vous |
-| Copier/coller les fichiers | Installation automatique |
-| Pas de découverte | Browse le catalogue entier |
-
-**Configuration** (déjà en place dans `.vscode/mcp.json`) :
+**Étape 3** — Ajouter le serveur `awesome-copilot` à côté de `playwright` :
 ```json
-"awesome-copilot": {
-  "type": "stdio",
-  "command": "docker",
-  "args": ["run", "-i", "--rm", "ghcr.io/microsoft/mcp-dotnet-samples/awesome-copilot:latest"]
+{
+  "mcp": {
+    "servers": {
+      "playwright": {
+        "command": "npx",
+        "args": ["@playwright/mcp@latest"]
+      },
+      "awesome-copilot": {
+        "type": "stdio",
+        "command": "docker",
+        "args": ["run", "-i", "--rm", "ghcr.io/microsoft/mcp-dotnet-samples/awesome-copilot:latest"]
+      }
+    }
+  }
 }
 ```
 
-**Alternative sans Docker** : Montrer le site https://github.com/github/awesome-copilot avec les badges "Install in VS Code" en 1 clic.
+**Étape 4** — Sauvegarder (`Ctrl+S`). VS Code détecte le nouveau serveur.
+
+**Étape 5** — Vérifier :
+```
+Ctrl+Shift+P → MCP: List Servers
+```
+Vous devez voir :
+```
+✅ playwright — Ready
+✅ awesome-copilot — Ready (ou Starting...)
+```
+
+**Étape 6** — Utiliser le MCP. Ouvrir Copilot Chat en mode **Agent**, taper :
+```
+Utilise awesome-copilot pour rechercher des instructions disponibles pour Node.js et Express
+```
+Observer : Copilot interroge le MCP Docker, affiche les résultats de la communauté.
+
+**Étape 7** — Demander à installer un résultat :
+```
+Installe l'instruction "nodejs" depuis awesome-copilot dans mon projet
+```
+Observer : Copilot crée automatiquement le fichier dans `.github/instructions/`.
+
+#### 🔬 Alternative sans Docker — Installation manuelle depuis GitHub
+
+**Étape 1** — Aller sur https://github.com/github/awesome-copilot
+
+**Étape 2** — Naviguer dans les dossiers `instructions/` ou `agents/`
+
+**Étape 3** — Trouver un fichier intéressant (ex: `instructions/nodejs.instructions.md`)
+
+**Étape 4** — Cliquer "Raw" → copier le contenu
+
+**Étape 5** — Dans VS Code, créer le fichier : `.github/instructions/nodejs.instructions.md` et coller
+
+**Étape 6** — Copilot l'utilise immédiatement (pas besoin de redémarrer)
+
+#### 📊 Comment voir l'effet
+
+| Méthode | Effort | Résultat |
+|---------|--------|----------|
+| MCP awesome-copilot | Taper une question → Copilot installe | Automatique, découverte facile |
+| GitHub manuellement | Copier/coller depuis le navigateur | Manuel mais pas de Docker requis |
+| Sans rien | Écrire ses propres instructions | Long mais sur mesure |
 
 ---
 
