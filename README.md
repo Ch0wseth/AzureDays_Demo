@@ -15,7 +15,7 @@
 6. [DÉMO 2 — Génération de tests](#-démo-2--génération-de-tests)
 7. [DÉMO 3 — Génération de documentation](#-démo-3--génération-de-documentation)
 8. [DÉMO 4 — Modes Copilot (Ask, Edit, Agent)](#-démo-4--modes-copilot-ask-edit-agent)
-9. [DÉMO 5 — Custom Agents, Prompts, Instructions & MCP](#-démo-5--custom-agents-prompts-instructions--mcp)
+9. [DÉMO 5 — Custom Agents, Prompts, Instructions, Skills & MCP](#-démo-5--custom-agents-prompts-instructions-skills--mcp)
 10. [DÉMO 6 — Gestion du Contexte](#-démo-6--gestion-du-contexte-influence-directe-sur-la-qualité-et-les-tokens)
 11. [DÉMO 7 — Bonnes Pratiques de Prompting](#-démo-7--bonnes-pratiques-de-prompting-avantaprès-mesurable)
 12. [DÉMO 8 — Optimisation tokens (Caveman Mode)](#-démo-8--optimisation-des-tokens-caveman-mode)
@@ -453,21 +453,26 @@ npm test
 
 ---
 
-## 🎬 DÉMO 5 — Custom Agents, Prompts, Instructions & MCP
+## 🎬 DÉMO 5 — Custom Agents, Prompts, Instructions, Skills & MCP
 
 ### 🎯 Objectif
-Montrer la personnalisation de Copilot pour l'adapter à un projet/équipe.
+Créer from scratch chaque type de personnalisation Copilot et observer son effet immédiat.
 
 ---
 
-### 5a. Instructions personnalisées
+### 5a. Créer des Instructions personnalisées (copilot-instructions.md)
 
-**Ce que c'est** : Un fichier `.github/copilot-instructions.md` qui donne du contexte permanent à Copilot.
+**Ce que c'est** : Un fichier `.github/copilot-instructions.md` qui injecte du contexte permanent à Copilot à chaque requête.
 
-**Modus Operandi** :
+#### 🔬 Manipulation — Observer l'effet ON/OFF
 
-1. **Ouvrir** `.github/copilot-instructions.md` dans VS Code → **montrer le contenu** :
+**Étape 1** — Ouvrir Copilot Chat, taper :
+```
+Crée un composant HTML pour un message de succès quand une tâche est créée
+```
+Observer le résultat : classes utilisées, langue du texte, style.
 
+**Étape 2** — Ouvrir `.github/copilot-instructions.md` (`Ctrl+P` → `copilot-instructions`). Observer le contenu :
 ```markdown
 ## Project Context
 This is a JavaScript demo application using **Orange Boosted 5.3**...
@@ -482,75 +487,298 @@ This is a JavaScript demo application using **Orange Boosted 5.3**...
 - Follow Orange Design System color palette (primary: #ff7900)
 ```
 
-2. **Ouvrir** Copilot Chat
-3. **Taper** :
-
+**Étape 3** — Renommer temporairement le fichier pour le désactiver :
+```powershell
+# Terminal VS Code (Ctrl+`)
+Rename-Item .github/copilot-instructions.md copilot-instructions.md.bak
 ```
-Crée un nouveau composant HTML pour afficher un message de succès quand une tâche est créée
+
+**Étape 4** — Nouvelle conversation (`+`), même prompt :
+```
+Crée un composant HTML pour un message de succès quand une tâche est créée
 ```
 
-4. **Observer** que Copilot :
-   - ✅ Utilise les classes Orange Boosted (`alert`, `alert-success`)
-   - ✅ Met le texte en français
-   - ✅ Respecte le dark mode
-   - ✅ Pas de classes Tailwind ni Bootstrap "vanilla"
+**Étape 5** — Comparer les résultats :
 
-5. **Preuve** : supprimer temporairement le fichier d'instructions, reposer la même question → Copilot ne connaît plus Orange Boosted
+| Aspect | Avec instructions | Sans instructions |
+|--------|------------------|-------------------|
+| Classes CSS | ✅ Orange Boosted (`alert-success`, `bg-dark`) | ❌ Bootstrap vanilla ou Tailwind |
+| Langue texte | ✅ Français | ❌ Anglais (probable) |
+| Dark mode | ✅ Respecté | ❌ Non mentionné |
+| Couleur primaire | ✅ `#ff7900` | ❌ Bleu Bootstrap |
 
+**Étape 6** — Remettre le fichier :
+```powershell
+Rename-Item .github/copilot-instructions.md.bak copilot-instructions.md
+```
 
----
+#### 🔬 Manipulation — Créer une instruction conditionnelle from scratch
 
-### 5b. Prompt Files réutilisables
+**Étape 1** — Créer un nouveau fichier `.github/instructions/api-routes.instructions.md` :
+```
+Ctrl+Shift+P → File: New File → .github/instructions/api-routes.instructions.md
+```
 
-**Ce que c'est** : Des templates de prompts dans `.github/prompts/` utilisables avec `/`.
-
-**Modus Operandi** :
-
-1. **Ouvrir** `.github/prompts/generate-route.prompt.md` → montrer le contenu :
-
+**Étape 2** — Copier ce contenu :
 ```markdown
 ---
-description: "Generate a new Express route with Orange Boosted conventions"
+applyTo: "src/routes/**"
 ---
-# Generate Express Route
-Create a new Express.js route module following project conventions:
-- Use ES Module syntax
-- Include JSDoc documentation
-- Add proper error handling
-- Return JSON with { data: ... } or { error: ... } format
+Conventions pour les routes API :
+- Toujours valider les entrées en début de handler
+- Format réponse succès : { data: ... }
+- Format réponse erreur : { error: "message explicite" }
+- Status codes : 200 (ok), 201 (created), 400 (bad input), 404 (not found), 500 (server error)
+- Toujours wrapper dans try/catch
+- Logger les erreurs avec console.error avant de les retourner
 ```
 
-2. **Ouvrir** Copilot Chat
-3. **Taper** `/` → la liste des prompts custom apparaît :
-   - `generate-route`
-   - `generate-tests`
-   - `generate-boosted-component`
-4. **Sélectionner** `generate-route`
-5. **Compléter** avec :
-
+**Étape 3** — Ouvrir `src/routes/tasks.js` et taper dans Copilot Chat :
 ```
-pour un endpoint /api/users qui gère des utilisateurs avec email, nom et rôle (admin/user)
+#file:src/routes/tasks.js Ajoute un endpoint DELETE /api/tasks/:id
 ```
+Observer : Copilot suit automatiquement les conventions (try/catch, format { data }, validation, logs).
 
-6. **Montrer** le résultat : un fichier route complet suivant exactement le template
+**Étape 4** — Ouvrir `src/services/taskService.js` et taper :
+```
+#file:src/services/taskService.js Ajoute une méthode pour archiver une tâche
+```
+Observer : les conventions de routes NE S'APPLIQUENT PAS (le fichier est hors du glob `src/routes/**`).
 
-
-### 📊 TOKENS — Noter dans le tableau (ligne 7)
+#### 📊 Comment voir l'effet
+- **Output panel** : les tokens IN sont légèrement plus élevés quand l'instruction est active (~+100-200 tokens)
+- **Qualité** : le code suit les conventions sans qu'on les re-demande à chaque fois
 
 ---
 
-### 5c. MCP Playwright Server — Copilot contrôle un navigateur
+### 5b. Créer des Prompt Files réutilisables
+
+**Ce que c'est** : Des templates de prompts dans `.github/prompts/` invocables avec `/nom`.
+
+#### 🔬 Manipulation — Créer un Prompt File from scratch
+
+**Étape 1** — Créer un nouveau fichier `.github/prompts/generate-service.prompt.md` :
+```
+Ctrl+Shift+P → File: New File → .github/prompts/generate-service.prompt.md
+```
+
+**Étape 2** — Écrire le template :
+```markdown
+---
+description: "Créer un nouveau service CRUD avec in-memory store"
+---
+# Génération de Service
+
+Crée un nouveau service dans `src/services/` avec :
+
+## Structure obligatoire
+- Export default d'une classe avec méthodes CRUD
+- Store in-memory avec `new Map()`
+- ID auto-généré avec `crypto.randomUUID()`
+
+## Méthodes à inclure
+- `getAll(filters)` — avec support pagination {page, limit}
+- `getById(id)` — retourne null si non trouvé
+- `create(data)` — valide les champs requis, ajoute createdAt
+- `update(id, data)` — merge avec existant, ajoute updatedAt
+- `delete(id)` — retourne le deleted ou null
+
+## Style
+- ES Modules (import/export)
+- JSDoc sur chaque méthode
+- Validation en début de méthode (early return pattern)
+```
+
+**Étape 3** — Ouvrir Copilot Chat. Taper `/` pour voir la liste des prompts disponibles :
+- `generate-route` (existant)
+- `generate-tests` (existant)
+- `generate-boosted-component` (existant)
+- `generate-service` ← **le nouveau apparaît !**
+
+**Étape 4** — Sélectionner `generate-service` et compléter :
+```
+pour des catégories de tâches (id, name, color, icon, createdAt)
+```
+
+**Étape 5** — Observer le résultat : un service complet et cohérent, généré en 1 tour.
+
+#### 📊 Comment voir l'effet
+
+| Sans Prompt File | Avec Prompt File |
+|------------------|-----------------|
+| Taper 10-15 lignes de prompt à chaque service | Taper `/generate-service` + 1 ligne |
+| Style variable d'un service à l'autre | Style identique à chaque fois |
+| ~80 tokens IN de prompt utilisateur | ~15 tokens IN de prompt utilisateur |
+
+---
+
+### 5c. Créer un Custom Agent (.agent.md)
+
+**Ce que c'est** : Un "persona" Copilot sélectionnable dans le dropdown du Chat avec des instructions spécialisées.
+
+#### 🔬 Manipulation — Créer un agent from scratch
+
+**Étape 1** — Créer `.github/agents/code-reviewer.agent.md` :
+```
+Ctrl+Shift+P → File: New File → .github/agents/code-reviewer.agent.md
+```
+
+**Étape 2** — Écrire la définition de l'agent :
+```markdown
+---
+description: "Agent de revue de code focalisé sécurité et performance"
+tools: ["changes", "editFiles"]
+---
+# Code Reviewer Agent
+
+Tu es un expert en revue de code. Tu analyses le code avec un focus sur :
+
+## Sécurité
+- Injections (SQL, XSS, Command)
+- Données utilisateur non validées
+- Secrets en dur dans le code
+- CORS mal configuré
+
+## Performance
+- Boucles O(n²) évitables
+- Fuites mémoire (listeners non nettoyés, closures)
+- Requêtes N+1
+- Absence de cache pour les opérations coûteuses
+
+## Format de réponse
+Pour chaque problème trouvé :
+- 🔴 CRITIQUE / 🟡 ATTENTION / 🟢 SUGGESTION
+- Fichier et ligne
+- Problème en 1 phrase
+- Fix proposé (code)
+
+Si rien à signaler : "✅ RAS — code propre"
+```
+
+**Étape 3** — Ouvrir Copilot Chat. Cliquer sur le **dropdown en haut** (là où il y a "Ask" / "Edit" / "Agent") → vous voyez maintenant :
+- `code-reviewer` ← **le nouveau agent !**
+- `caveman-mode` (déjà existant)
+
+**Étape 4** — Sélectionner `code-reviewer`, puis taper :
+```
+Analyse src/routes/tasks.js
+```
+
+**Étape 5** — Observer : l'agent répond avec le format défini (🔴/🟡/🟢) et est focalisé sécurité/perf.
+
+**Étape 6** — Changer d'agent → sélectionner `caveman-mode`, même prompt :
+```
+Analyse src/routes/tasks.js
+```
+Observer : réponse ultra-courte, style "caveman" (pas de phrases complètes).
+
+#### 📊 Comment voir l'effet
+
+| Agent | Style de réponse | Focus |
+|-------|-----------------|-------|
+| (aucun — Chat normal) | Généraliste, verbose | Tout |
+| `code-reviewer` | Structuré 🔴🟡🟢, actionnable | Sécurité + Perf |
+| `caveman-mode` | Ultra-compact, mots-clés | Économie tokens |
+
+**Différence avec Instructions** :
+- Instructions = toujours actives (injectées automatiquement)
+- Agent = activé à la demande (on le choisit dans le dropdown)
+
+---
+
+### 5d. Custom Skills (Vision Files)
+
+**Ce que c'est** : Des fichiers qui décrivent des compétences spécialisées que Copilot peut invoquer en mode Agent. Un skill = un ensemble de connaissances + outils que l'agent peut utiliser.
+
+#### 🔬 Manipulation — Voir l'effet des skills existants
+
+**Étape 1** — Ouvrir `.vscode/mcp.json` (`Ctrl+P` → `mcp.json`). Observer les serveurs MCP configurés = ce sont des **skills externes** donnés à Copilot :
+```json
+{
+  "mcp": {
+    "servers": {
+      "playwright": {
+        "command": "npx",
+        "args": ["@playwright/mcp@latest"]
+      }
+    }
+  }
+}
+```
+
+**Étape 2** — En mode Agent, taper :
+```
+Quels outils as-tu à disposition ?
+```
+Copilot listera ses outils, y compris ceux du MCP Playwright (navigate, click, screenshot, fill...).
+
+**Étape 3** — Vérifier les skills via la commande palette :
+```
+Ctrl+Shift+P → MCP: List Servers
+```
+Vous voyez les serveurs connectés et leurs outils disponibles.
+
+#### 🔬 Manipulation — Créer un skill via un Prompt File avancé
+
+Un "skill" peut aussi être un Prompt File qui combine instructions + outils + workflow :
+
+**Étape 1** — Créer `.github/prompts/audit-accessibility.prompt.md` :
+```markdown
+---
+description: "Auditer l'accessibilité d'une page avec Playwright"
+---
+# Audit Accessibilité
+
+Utilise le navigateur Playwright pour auditer l'accessibilité :
+
+1. Naviguer vers http://localhost:3000
+2. Prendre un screenshot
+3. Vérifier :
+   - Tous les boutons ont un aria-label ou un texte visible
+   - Les images ont un attribut alt
+   - Le contraste des couleurs est suffisant (ratio 4.5:1 minimum)
+   - La navigation au clavier fonctionne (tabindex logique)
+   - Les formulaires ont des labels associés
+4. Retourner un rapport au format :
+   - ✅ Conforme / ❌ Non conforme pour chaque critère
+   - Screenshot annoté si possible
+```
+
+**Étape 2** — En mode Agent, taper :
+```
+/audit-accessibility
+```
+
+**Étape 3** — Observer : Copilot combine le Prompt File (instructions) + le MCP Playwright (outil) pour exécuter un audit complet.
+
+#### 📊 Comment voir l'effet
+
+| Sans skill/MCP | Avec skill/MCP |
+|---------------|----------------|
+| Copilot ne peut que générer du code | Copilot EXÉCUTE des actions (naviguer, cliquer, vérifier) |
+| "Voici le code pour tester l'accessibilité…" | "J'ai testé la page, voici les résultats avec screenshots" |
+| Réponse théorique | Réponse basée sur des données réelles |
+
+---
+
+### 5e. Intégration MCP — Playwright (Copilot contrôle un navigateur)
 
 **Ce que c'est** : Un serveur MCP (Model Context Protocol) qui donne à Copilot la capacité de piloter un navigateur web réel.
 
 **Pré-requis** : Le serveur de l'app doit tourner (`npm run dev`).
 
-**Modus Operandi** :
+#### 🔬 Manipulation — Voir Copilot interagir avec l'app
 
-1. **Vérifier** que l'app tourne : http://localhost:3000 dans le navigateur
-2. **Ouvrir** Copilot Chat en mode **Agent** (dropdown → Agent)
-3. **Taper exactement** :
+**Étape 1** — Vérifier que l'app tourne :
+```powershell
+# Terminal VS Code (Ctrl+`)
+npm run dev
+```
+Ouvrir http://localhost:3000 pour confirmer.
 
+**Étape 2** — Ouvrir Copilot Chat en mode **Agent** (dropdown → Agent)
+
+**Étape 3** — Taper exactement :
 ```
 Utilise le navigateur Playwright pour :
 1. Aller sur http://localhost:3000
@@ -563,21 +791,29 @@ Utilise le navigateur Playwright pour :
 8. Prendre un screenshot final
 ```
 
-4. **Observer** :
-   - Copilot démarre un navigateur Chromium (vous pouvez le voir apparaître)
-   - Il navigue, clique, remplit des champs
-   - Il prend des screenshots (affichés inline dans le chat)
-   - Il vérifie le résultat
+**Étape 4** — Observer :
+- Copilot démarre un navigateur Chromium (visible à l'écran)
+- Il navigue, clique, remplit des champs automatiquement
+- Il prend des screenshots (affichés inline dans le chat)
+- Il vérifie le résultat et confirme
 
 **✅ Résultat attendu** :
 - 2 screenshots dans le chat (avant/après)
 - La tâche "Tâche créée par Copilot MCP" visible dans l'app
 - Message de confirmation de Copilot
 
+#### 📊 Comment voir l'effet
+
+| Sans MCP Playwright | Avec MCP Playwright |
+|--------------------|---------------------|
+| "Voici le code Playwright pour tester..." | Copilot EXÉCUTE le test en live |
+| Vous devez copier/coller et lancer | Résultat immédiat avec screenshots |
+| Pas de vérification visuelle | Preuves visuelles dans le chat |
+
 **Si ça ne marche pas** :
-- Vérifier que `npm run dev` tourne (port 3000)
-- `Ctrl+Shift+P` → `MCP: List Servers` → vérifier que Playwright est "Ready"
-- Recharger VS Code si nécessaire
+- Vérifier : `Ctrl+Shift+P` → `MCP: List Servers` → Playwright = "Ready"
+- Vérifier : `npm run dev` tourne dans un terminal
+- Recharger VS Code si nécessaire (`Ctrl+Shift+P` → `Developer: Reload Window`)
 
 **Configuration** (déjà en place dans `.vscode/mcp.json`) :
 ```json
@@ -593,33 +829,42 @@ Utilise le navigateur Playwright pour :
 }
 ```
 
-
-### 📊 TOKENS — Noter dans le tableau (ligne 8)
-
 ---
 
-### 5d. MCP Awesome Copilot — Catalogue communautaire
+### 5f. Intégration MCP — Awesome Copilot (catalogue communautaire)
 
 **Ce que c'est** : Un MCP server qui connecte Copilot au repo communautaire [github/awesome-copilot](https://github.com/github/awesome-copilot) contenant des centaines d'agents, instructions et prompts.
 
 **Pré-requis** : Docker doit tourner.
 
-**Modus Operandi** :
+#### 🔬 Manipulation
 
-1. **Vérifier** Docker : `docker ps` dans le terminal (pas d'erreur)
-2. **Ouvrir** Copilot Chat en mode **Agent**
-3. **Taper** :
+**Étape 1** — Vérifier Docker :
+```powershell
+docker ps
+```
 
+**Étape 2** — Ouvrir Copilot Chat en mode **Agent**
+
+**Étape 3** — Taper :
 ```
 Utilise awesome-copilot pour rechercher des instructions disponibles pour Node.js et Express
 ```
 
-4. **Observer** : Copilot interroge le MCP, affiche les résultats disponibles
-5. **Optionnel** — demander à installer :
+**Étape 4** — Observer : Copilot interroge le MCP, affiche les résultats disponibles dans la communauté
 
+**Étape 5** — Demander à installer un résultat :
 ```
-Installe l'instruction "nodejs" depuis awesome-copilot
+Installe l'instruction "nodejs" depuis awesome-copilot dans mon projet
 ```
+
+#### 📊 Comment voir l'effet
+
+| Sans MCP awesome-copilot | Avec MCP awesome-copilot |
+|--------------------------|--------------------------|
+| Chercher manuellement sur GitHub | Copilot cherche pour vous |
+| Copier/coller les fichiers | Installation automatique |
+| Pas de découverte | Browse le catalogue entier |
 
 **Configuration** (déjà en place dans `.vscode/mcp.json`) :
 ```json
@@ -630,7 +875,22 @@ Installe l'instruction "nodejs" depuis awesome-copilot
 }
 ```
 
-**Alternative sans Docker** : Montrer le site https://awesome-copilot.github.com avec la recherche et les badges "Install in VS Code" en 1 clic.
+**Alternative sans Docker** : Montrer le site https://github.com/github/awesome-copilot avec les badges "Install in VS Code" en 1 clic.
+
+---
+
+### 5g. Résumé — Quoi utiliser quand
+
+| Outil | Fichier | Quand l'utiliser | Effet |
+|-------|---------|-----------------|-------|
+| **Instructions projet** | `.github/copilot-instructions.md` | Conventions qui s'appliquent TOUJOURS | Auto-injecté à chaque requête |
+| **Instructions conditionnelles** | `.github/instructions/*.md` | Conventions pour un TYPE de fichier | Injecté seulement quand le glob matche |
+| **Prompt Files** | `.github/prompts/*.prompt.md` | Patterns récurrents (créer route, service, test) | Invocable avec `/nom` |
+| **Custom Agents** | `.github/agents/*.agent.md` | Personas spécialisés (reviewer, caveman) | Sélectionnable dans le dropdown |
+| **MCP Servers** | `.vscode/mcp.json` | Donner des CAPACITÉS à Copilot (naviguer, DB, API) | Outils supplémentaires en mode Agent |
+| **Skills** | Prompt File + MCP combinés | Workflows complets automatisés | Enchaîne instructions + actions |
+
+### 📊 TOKENS — Noter dans le tableau
 
 
 
