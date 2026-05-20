@@ -22,6 +22,8 @@
 13. [Structure du projet](#-structure-du-projet)
 14. [Checklist Jour-J](#-checklist-jour-j)
 15. [Ressources](#-ressources)
+16. [FAQ / Troubleshooting](#-faq--troubleshooting)
+17. [Reproduire la démo — Guide express](#-reproduire-la-démo--guide-express-5-min)
 
 ---
 
@@ -2813,16 +2815,23 @@ Crée une fonction pour calculer la moyenne d'un tableau de nombres
 Observer : Copilot génère en **ES Module**, avec **JSDoc**, en suivant les conventions du projet — même sans le lui demander dans le prompt.
 
 **Étape 4** — Pour prouver que c'est grâce aux instructions : renommer temporairement le fichier :
-```
-# Dans le terminal VS Code (Ctrl+`)
-mv .github/copilot-instructions.md .github/copilot-instructions.md.bak
+```powershell
+# Windows (PowerShell) :
+Rename-Item .github/copilot-instructions.md copilot-instructions.md.bak
+
+# Mac/Linux :
+# mv .github/copilot-instructions.md .github/copilot-instructions.md.bak
 ```
 
 **Étape 5** — Nouvelle conversation, même prompt. Observer : le style sera générique (peut-être CommonJS, pas de JSDoc…).
 
 **Étape 6** — Remettre le fichier :
-```
-mv .github/copilot-instructions.md.bak .github/copilot-instructions.md
+```powershell
+# Windows (PowerShell) :
+Rename-Item .github/copilot-instructions.md.bak copilot-instructions.md
+
+# Mac/Linux :
+# mv .github/copilot-instructions.md.bak .github/copilot-instructions.md
 ```
 
 #### 📊 Résultat attendu
@@ -3693,13 +3702,21 @@ copilot-demo-orange/
 ├── .github/
 │   ├── copilot-instructions.md              # 📄 Instructions globales projet
 │   ├── agents/
-│   │   └── caveman-mode.agent.md            # 🦴 Agent Caveman (github/awesome-copilot)
+│   │   ├── caveman-mode.agent.md            # 🦴 Agent Caveman (github/awesome-copilot)
+│   │   ├── code-reviewer.agent.md           # 🔍 Agent review sécurité/perf
+│   │   ├── full-review.agent.md             # 📋 Agent orchestrateur 3-passes
+│   │   └── qa-tester.agent.md               # 🧪 Agent QA navigateur
 │   ├── instructions/
-│   │   └── caveman-mode.instructions.md.disabled  # 🦴 Instruction terse (activer pour démo 8)
+│   │   ├── caveman-mode.instructions.md.disabled  # 🦴 Instruction terse (activer pour démo 8)
+│   │   ├── api-routes.instructions.md       # 📏 Conventions routes (applyTo: src/routes/**)
+│   │   └── tests.instructions.md            # 📏 Conventions tests (applyTo: tests/**)
 │   └── prompts/
 │       ├── generate-route.prompt.md         # 📝 Template: nouveau endpoint
 │       ├── generate-tests.prompt.md         # 📝 Template: tests unitaires
-│       └── generate-boosted-component.prompt.md  # 📝 Template: composant UI
+│       ├── generate-boosted-component.prompt.md  # 📝 Template: composant UI
+│       ├── generate-service.prompt.md       # 📝 Template: service CRUD
+│       ├── generate-crud.prompt.md          # 📝 Template: module complet (skill)
+│       └── audit-accessibility.prompt.md    # 📝 Template: audit a11y
 ├── .vscode/
 │   ├── mcp.json                             # 🔌 Serveurs MCP: Playwright + Awesome Copilot
 │   └── extensions.json                      # 📦 Extensions recommandées
@@ -3723,6 +3740,8 @@ copilot-demo-orange/
 │   ├── validators.test.js                   # 🧪 11 tests (validateurs)
 │   └── e2e/
 │       └── taskManager.spec.js              # 🎭 7 tests Playwright E2E
+├── scripts/
+│   └── reset-demo.js                        # 🔄 Script de reset entre démos
 ├── playwright.config.js                     # ⚙️ Config Playwright
 ├── jest.config.js                           # ⚙️ Config Jest (exclut e2e/)
 ├── package.json
@@ -3793,6 +3812,40 @@ copilot-demo-orange/
 
 ## ❓ FAQ / Troubleshooting
 
+### ⚠️ Commandes par OS
+
+Toutes les commandes PowerShell de ce README fonctionnent sur **Windows** (VS Code utilise PowerShell par défaut). Voici les équivalents pour Mac/Linux :
+
+| Action | Windows (PowerShell) | Mac/Linux (bash) |
+|--------|---------------------|-----------------|
+| Renommer | `Rename-Item fichier.md fichier.bak` | `mv fichier.md fichier.bak` |
+| Supprimer | `Remove-Item fichier.js` | `rm fichier.js` |
+| Lister | `Get-ChildItem .github/` | `ls .github/` |
+| Vérifier | `Test-Path .github/copilot-instructions.md` | `test -f .github/copilot-instructions.md` |
+
+---
+
+### 🔄 Script de reset — Remettre tout en état entre les démos
+
+Si vous avez fait des modifications pendant une démo et voulez repartir de zéro :
+
+```bash
+# Option 1 — Reset complet (annule TOUTES les modifications locales)
+git checkout .
+git clean -fd
+
+# Option 2 — Reset sélectif (script fourni)
+node scripts/reset-demo.js
+```
+
+Le script `reset-demo.js` remet spécifiquement :
+- ✅ `caveman-mode.instructions.md` → `.disabled`
+- ✅ Supprime les fichiers temporaires (`temp-*.js`, `categoryService.js`)
+- ✅ Remet `.copilotignore` à son état d'origine
+- ✅ Remet `copilot-instructions.md` s'il a été renommé
+
+---
+
 ### "Copilot ne propose rien quand je tape"
 - Vérifier que l'extension est activée (icône Copilot en bas à droite de VS Code)
 - Vérifier la licence : https://github.com/settings/copilot
@@ -3820,3 +3873,108 @@ copilot-demo-orange/
 - Setting à ajouter : `"github.copilot.advanced.debug.showTokenCount": true`
 - Output Panel : `Ctrl+Shift+U` → sélectionner `GitHub Copilot Chat` dans le dropdown
 - Les tokens ne sont pas toujours visibles selon la version de l'extension
+
+### "Les Prompt Files (/generate-route) n'apparaissent pas"
+- Vérifier que les fichiers `.github/prompts/*.prompt.md` existent
+- Vérifier qu'ils commencent par un frontmatter YAML valide (`---` ... `---`)
+- Recharger VS Code : `Ctrl+Shift+P` → `Developer: Reload Window`
+- Dans le chat, taper `/` et attendre 1-2 secondes que la liste charge
+
+### "Les Custom Agents n'apparaissent pas dans le dropdown"
+- Vérifier que les fichiers sont dans `.github/agents/` (pas `.github/agent/`)
+- Le nom de fichier = le nom dans le dropdown (ex: `code-reviewer.agent.md` → `code-reviewer`)
+- Le frontmatter doit contenir `name` et `description`
+- Recharger VS Code après création d'un agent
+
+### "L'instruction conditionnelle ne s'applique pas"
+- Vérifier que le fichier est dans `.github/instructions/` (pas `.github/`)
+- Le `applyTo` dans le frontmatter doit matcher le fichier ouvert :
+  - `"tests/**"` → s'applique quand un fichier dans `tests/` est ouvert
+  - `"src/routes/**"` → s'applique quand un fichier dans `src/routes/` est ouvert
+- Le fichier actif (onglet sélectionné) détermine quelles instructions s'appliquent
+- Vérifier dans Output panel : chercher "Custom instructions" dans les logs
+
+### "npm test échoue avec SyntaxError: Cannot use import statement"
+- Le projet utilise ES Modules (`"type": "module"` dans package.json)
+- Jest nécessite le flag : `node --experimental-vm-modules node_modules/jest/bin/jest.js`
+- Le script `npm test` est déjà configuré correctement, ne pas appeler `jest` directement
+
+### "Erreur EADDRINUSE: port 3000 déjà utilisé"
+```powershell
+# Windows — trouver et tuer le processus
+netstat -ano | findstr :3000
+# Noter le PID (dernière colonne), puis :
+Stop-Process -Id <PID>
+
+# Mac/Linux :
+# lsof -i :3000
+# kill <PID>
+```
+
+### "Le navigateur MCP Playwright ne s'ouvre pas"
+- Playwright utilise Chromium headless par défaut dans MCP
+- Si besoin de voir le navigateur, modifier `.vscode/mcp.json` :
+```json
+{
+  "mcp": {
+    "servers": {
+      "playwright": {
+        "command": "npx",
+        "args": ["@playwright/mcp@latest", "--headless=false"]
+      }
+    }
+  }
+}
+```
+- Après modification : `Ctrl+Shift+P` → `MCP: Stop Server` → `playwright`, puis `MCP: Start Server` → `playwright`
+
+---
+
+## 🔄 Reproduire la démo — Guide express (5 min)
+
+Pour quelqu'un qui clone le repo et veut tout lancer rapidement :
+
+```bash
+# 1. Cloner
+git clone https://github.com/Ch0wseth/AzureDays_Demo.git
+cd AzureDays_Demo
+
+# 2. Installer
+npm install
+npx playwright install chromium
+
+# 3. Vérifier
+npm test                    # Doit afficher "29 passed"
+npm run dev                 # Doit afficher "running at http://localhost:3000"
+# (Ctrl+C pour arrêter)
+
+# 4. Ouvrir dans VS Code
+code .
+
+# 5. Dans VS Code, vérifier :
+#    - Ctrl+Shift+P → "MCP: List Servers" → playwright visible
+#    - Ctrl+Shift+I → taper "Quel framework ?" → doit répondre "Orange Boosted"
+#    - Ctrl+Shift+U → dropdown → "GitHub Copilot Chat" → logs visibles
+
+# 6. Prêt ! Suivre le README à partir de "DÉMO 1"
+```
+
+### Configuration minimale requise
+
+| Composant | Minimum | Recommandé |
+|-----------|---------|------------|
+| RAM | 8 Go | 16 Go |
+| VS Code | 1.100+ | Dernière stable |
+| Node.js | 20 LTS | 22 LTS |
+| Connexion internet | Requise (Copilot = API cloud) | Rapide (< 200ms latence) |
+| Écran | 1 écran | 2 écrans (code + navigateur) |
+| Licence Copilot | Individual | Business/Enterprise (pour les agents) |
+
+### Versions testées et validées
+
+Ce repo a été testé avec :
+- Node.js 22.x (LTS)
+- VS Code 1.100+
+- GitHub Copilot Extension 1.250+
+- Windows 11, macOS Sonoma, Ubuntu 24.04
+- Playwright 1.45+
