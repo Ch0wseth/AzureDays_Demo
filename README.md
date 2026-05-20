@@ -64,8 +64,8 @@ Vérifier : https://github.com/settings/copilot
 ### Étape 1 — Cloner le repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/copilot-demo-orange.git
-cd copilot-demo-orange
+git clone https://github.com/Ch0wseth/AzureDays_Demo.git
+cd AzureDays_Demo
 ```
 
 ### Étape 2 — Installer les dépendances Node.js
