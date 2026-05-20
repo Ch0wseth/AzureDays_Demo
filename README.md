@@ -3548,9 +3548,12 @@ Prouver concrètement qu'on peut réduire de 50-70% la consommation de tokens sa
 **Étape 1 — Activer le Caveman Mode** :
 
 Renommer le fichier pour l'activer :
-```bash
-# Dans le terminal VS Code
-mv .github/instructions/caveman-mode.instructions.md.disabled .github/instructions/caveman-mode.instructions.md
+```powershell
+# Windows (PowerShell) :
+Rename-Item ".github/instructions/caveman-mode.instructions.md.disabled" "caveman-mode.instructions.md"
+
+# Mac/Linux :
+# mv .github/instructions/caveman-mode.instructions.md.disabled .github/instructions/caveman-mode.instructions.md
 ```
 
 > **Note** : Ce fichier est livré désactivé (`.disabled`) par défaut pour ne pas affecter les démos 1-7.
@@ -3630,8 +3633,12 @@ coverage/
 ```
 
 **Étape 2 — Supprimer temporairement** :
-```bash
-mv .copilotignore .copilotignore.backup
+```powershell
+# Windows (PowerShell) :
+Rename-Item .copilotignore .copilotignore.backup
+
+# Mac/Linux :
+# mv .copilotignore .copilotignore.backup
 ```
 
 **Étape 3 — Nouvelle conversation + même question** :
@@ -3642,8 +3649,12 @@ Explique-moi comment fonctionne le filtrage dans la fonction getTasks() du fichi
 ### 📊 TOKENS — Noter les tokens IN (ligne 10)
 
 **Étape 4 — Remettre le fichier** :
-```bash
-mv .copilotignore.backup .copilotignore
+```powershell
+# Windows (PowerShell) :
+Rename-Item .copilotignore.backup .copilotignore
+
+# Mac/Linux :
+# mv .copilotignore.backup .copilotignore
 ```
 
 **Étape 5 — Montrer la différence** :
@@ -3691,6 +3702,88 @@ Comment fonctionne la création de tâches ?
 | Fonctions courtes (<30 lignes) | **-15 à -25%** | — | Bonne pratique = fichiers plus petits |
 | JSDoc précis | — | **Moins de re-prompts** | Documenter → Copilot comprend mieux du 1er coup |
 | Modèle léger | **-50% coût** | — | `model: 'gpt-4o-mini'` dans prompt file |
+
+---
+
+### 6e. 💡 Tips pratiques pour gérer ses tokens au quotidien
+
+**Réduire les tokens IN (ce que Copilot reçoit)** :
+
+| Tip | Pourquoi | Comment |
+|-----|----------|---------|
+| **Nouvelle conversation fréquemment** | L'historique s'accumule à chaque tour (tokens IN explosent) | Cliquer `+` dès que le sujet change |
+| **`#file:` plutôt que @workspace** | @workspace scanne tout le projet ; #file: envoie uniquement le fichier ciblé | `#file:src/services/taskService.js explique la création` |
+| **Fichiers courts et focalisés** | Copilot envoie le fichier ouvert en contexte | Découper les gros fichiers (>200 lignes) en modules |
+| **`.copilotignore` bien configuré** | Exclut le bruit (node_modules, lock, logs, dist) | Ajouter tout ce qui n'est pas du code source utile |
+| **Fermer les onglets inutiles** | VS Code envoie parfois les onglets ouverts comme contexte | Ne garder que les fichiers pertinents à la tâche |
+
+**Réduire les tokens OUT (ce que Copilot génère)** :
+
+| Tip | Pourquoi | Comment |
+|-----|----------|---------|
+| **Demander "code uniquement"** | Évite les explications autour du code | Ajouter "Code uniquement, pas d'explication" au prompt |
+| **Caveman Mode** | Réduit les réponses de 50-70% | Activer l'agent ou l'instruction |
+| **Prompt Files structurés** | Le template guide Copilot → moins de hors-sujet | Créer des `/generate-*` pour les tâches répétitives |
+| **Être spécifique** | Plus le prompt est précis, moins Copilot "hésite" et génère d'alternatives | "Ajoute validation email regex" > "Ajoute de la validation" |
+| **Une chose à la fois** | Un prompt = une action → réponse courte et ciblée | Éviter les prompts qui demandent 5 choses |
+
+**Réduire les re-prompts (tours gaspillés)** :
+
+| Tip | Pourquoi | Comment |
+|-----|----------|---------|
+| **Instructions projet à jour** | Copilot génère correctement du 1er coup | Maintenir `.github/copilot-instructions.md` à jour |
+| **Instructions conditionnelles** | Le bon contexte au bon moment, automatiquement | Utiliser `applyTo` dans `.github/instructions/` |
+| **Prompt structuré en liste** | Copilot ne rate rien si c'est numéroté | `1. Crée... 2. Modifie... 3. Teste...` |
+| **Donner un exemple** | Copilot reproduit le pattern donné | "Même style que getAll() dans taskService.js" |
+| **Vérifier le modèle** | GPT-4o > GPT-4o-mini pour les tâches complexes | Cliquer sur le modèle en bas du chat pour changer |
+
+**En résumé — La règle des 3C** :
+- **Contexte** minimal et ciblé (tokens IN ↓)
+- **Concision** dans les prompts (tokens OUT ↓)
+- **Convention** via instructions/prompts (re-prompts ↓)
+
+---
+
+## ⏱️ Durée estimée de la démo
+
+### Version complète (toutes les démos)
+
+| Démo | Contenu | Durée estimée |
+|------|---------|:---:|
+| **DÉMO 1** | Génération de code | 5 min |
+| **DÉMO 2** | Génération de tests | 5 min |
+| **DÉMO 3** | Génération de docs | 3 min |
+| **DÉMO 4** | Modes Ask / Edit / Agent | 10 min |
+| **DÉMO 5** | Custom Agents, Prompts, Instructions, Skills, MCP | 25-35 min |
+| **DÉMO 5 🏆** | Comparatifs avancés (6 comparatifs) | 20-30 min |
+| **DÉMO 6** | Gestion du contexte | 10-15 min |
+| **DÉMO 7** | Bonnes pratiques prompting | 10-15 min |
+| **DÉMO 8** | Optimisation tokens (Caveman) | 5-10 min |
+| | **TOTAL complet** | **~90-120 min** |
+
+### Versions raccourcies (selon le temps disponible)
+
+**Format 30 min — "L'essentiel"** :
+- DÉMO 1 (code) — 3 min
+- DÉMO 4c (Agent mode) — 5 min
+- DÉMO 5 : Comparatif 6 "WOW" uniquement — 10 min
+- DÉMO 8 (Caveman Mode) — 5 min
+- Conclusion + tokens — 5 min
+
+**Format 45 min — "Le convaincant"** :
+- DÉMO 1 (code) — 3 min
+- DÉMO 2 (tests) — 3 min
+- DÉMO 4 (3 modes) — 7 min
+- DÉMO 5 : Comparatifs 1 + 4 + 6 — 15 min
+- DÉMO 8 (Caveman) — 5 min
+- Tips tokens + conclusion — 7 min
+
+**Format 60 min — "Le complet"** :
+- DÉMO 1-3 (code/tests/docs) — 10 min
+- DÉMO 4 (3 modes) — 8 min
+- DÉMO 5 : Comparatifs 1 + 3 + 4 + 5 + 6 — 25 min
+- DÉMO 7 (2-3 règles de prompting) — 7 min
+- DÉMO 8 (Caveman) + tips — 10 min
 
 
 ---
