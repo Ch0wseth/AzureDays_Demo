@@ -16,10 +16,11 @@
 7. [DÉMO 3 — Génération de documentation](#-démo-3--génération-de-documentation)
 8. [DÉMO 4 — Modes Copilot (Ask, Edit, Agent)](#-démo-4--modes-copilot-ask-edit-agent)
 9. [DÉMO 5 — Custom Agents, Prompts, Instructions & MCP](#-démo-5--custom-agents-prompts-instructions--mcp)
-10. [DÉMO 6 — Optimisation tokens (Caveman Mode)](#-démo-6--optimisation-des-tokens-caveman-mode)
-11. [Structure du projet](#-structure-du-projet)
-12. [Checklist Jour-J](#-checklist-jour-j)
-13. [Ressources](#-ressources)
+10. [Bonnes Pratiques de Prompting](#-bonnes-pratiques-de-prompting-pour-copilot)
+11. [DÉMO 6 — Optimisation tokens (Caveman Mode)](#-démo-6--optimisation-des-tokens-caveman-mode)
+12. [Structure du projet](#-structure-du-projet)
+13. [Checklist Jour-J](#-checklist-jour-j)
+14. [Ressources](#-ressources)
 
 ---
 
@@ -630,6 +631,216 @@ Installe l'instruction "nodejs" depuis awesome-copilot
 
 **Alternative sans Docker** : Montrer le site https://awesome-copilot.github.com avec la recherche et les badges "Install in VS Code" en 1 clic.
 
+
+
+---
+
+## 📐 Bonnes Pratiques de Prompting pour Copilot
+
+### Règle 1 — Être spécifique et contextuel
+
+❌ **Mauvais prompt** :
+```
+Fais moi une fonction
+```
+
+✅ **Bon prompt** :
+```
+Crée une fonction validateEmail(email: string): boolean qui utilise une regex RFC 5322 et retourne false pour les adresses jetables (mailinator, yopmail)
+```
+
+**Pourquoi** : Plus le prompt est précis, moins Copilot fait d'allers-retours = moins de tokens.
+
+---
+
+### Règle 2 — Donner le format de sortie attendu
+
+❌ **Mauvais prompt** :
+```
+Ajoute de la validation
+```
+
+✅ **Bon prompt** :
+```
+Ajoute la validation suivante dans createTask() :
+- title : string, 3-100 chars, obligatoire
+- description : string, max 500 chars, optionnel
+- priority : enum "low" | "medium" | "high", défaut "medium"
+Lancer une Error avec un message explicite si invalide.
+```
+
+**Pourquoi** : Copilot génère exactement ce qu'on veut du premier coup.
+
+---
+
+### Règle 3 — Utiliser `#file:` pour limiter le contexte
+
+❌ **Mauvais prompt** :
+```
+Explique le code de gestion des tâches
+```
+
+✅ **Bon prompt** :
+```
+#file:src/services/taskService.js Explique la logique de filtrage dans getTasks()
+```
+
+**Pourquoi** : Copilot n'envoie que le fichier ciblé → 60-80% de tokens IN en moins.
+
+---
+
+### Règle 4 — Structurer les demandes complexes en liste
+
+❌ **Mauvais prompt** :
+```
+J'aimerais que tu crées un endpoint pour les utilisateurs qui gère la création avec validation et les erreurs et aussi les tests
+```
+
+✅ **Bon prompt** :
+```
+Crée un endpoint POST /api/users :
+
+1. Validation :
+   - email : format valide, unique
+   - name : 2-50 chars
+   - role : "admin" | "user"
+
+2. Réponse :
+   - 201 + { data: user } si succès
+   - 400 + { error: message } si validation échoue
+
+3. Tests Jest :
+   - Cas valide
+   - Email invalide
+   - Email dupliqué
+   - Role invalide
+```
+
+**Pourquoi** : Structure claire = Copilot organise sa réponse, pas de oubli.
+
+---
+
+### Règle 5 — Référencer des exemples existants
+
+❌ **Mauvais prompt** :
+```
+Crée un nouveau service
+```
+
+✅ **Bon prompt** :
+```
+#file:src/services/taskService.js Crée un service userService.js avec la même structure (in-memory store, CRUD, JSDoc, validation) mais pour des utilisateurs (id, email, name, role)
+```
+
+**Pourquoi** : Copilot reproduit les patterns existants → cohérence garantie.
+
+---
+
+### Règle 6 — Demander un format de réponse minimal quand c'est suffisant
+
+❌ **Prompt qui génère trop** :
+```
+Comment corriger cette erreur ?
+```
+
+✅ **Prompt optimisé** :
+```
+Corrige cette erreur. Donne uniquement le code modifié, pas d'explication.
+```
+
+**Pourquoi** : Réduit les tokens OUT de 50%+ quand on n'a pas besoin d'explications.
+
+---
+
+### Règle 7 — Utiliser les commandes intégrées quand elles existent
+
+| Au lieu de taper... | Utiliser |
+|---------------------|----------|
+| "Génère les tests pour cette fonction" | `/tests` |
+| "Documente cette fonction" | `/doc` |
+| "Explique ce code" | `/explain` |
+| "Corrige ce bug" | `/fix` |
+
+**Pourquoi** : Les commandes `/` sont optimisées côté tokens par GitHub.
+
+---
+
+### Règle 8 — Itérer plutôt que tout demander d'un coup
+
+❌ **Prompt trop ambitieux** :
+```
+Crée une app complète de gestion de projet avec auth, CRUD, notifications, tests, CI/CD et déploiement
+```
+
+✅ **Approche itérative** :
+```
+Étape 1 : Crée le modèle User avec validation
+Étape 2 : Crée les routes CRUD pour User
+Étape 3 : Ajoute l'authentification JWT
+...
+```
+
+**Pourquoi** : Chaque itération est focalisée → meilleure qualité et debugging plus facile.
+
+---
+
+### Règle 9 — Préciser la technologie et les contraintes
+
+❌ **Ambigu** :
+```
+Fais un cache
+```
+
+✅ **Précis** :
+```
+Implémente un cache LRU in-memory en JavaScript ES Module :
+- Capacité max configurable (défaut: 100)
+- TTL par entrée (défaut: 5 min)
+- Méthodes : get(key), set(key, value, ttl?), delete(key), clear()
+- Pas de dépendance externe
+```
+
+---
+
+### Règle 10 — Utiliser les Prompt Files pour les patterns récurrents
+
+Si vous demandez souvent la même chose (créer un route, un test, un composant), mettez-le dans `.github/prompts/` :
+
+```markdown
+---
+description: "Créer un endpoint Express standard"
+---
+# Template
+- ES Modules
+- JSDoc
+- Error handling try/catch
+- Response format { data } ou { error }
+- Status codes 200/201/400/404
+```
+
+Ensuite taper `/generate-route` au lieu de réécrire le prompt à chaque fois.
+
+**Pourquoi** : 
+- Gain de tokens IN à chaque utilisation
+- Prompts testés et fiabilisés au fil du temps
+- Cohérence dans l'équipe
+
+---
+
+### Récapitulatif
+
+| Pratique | Impact |
+|----------|--------|
+| Être spécifique | Moins d'allers-retours |
+| Format de sortie | Réponse du premier coup |
+| `#file:` ciblé | -60-80% tokens IN |
+| Listes structurées | Rien d'oublié |
+| Référencer l'existant | Cohérence projet |
+| Demander le minimum | -50% tokens OUT |
+| Commandes `/` | Optimisé par GitHub |
+| Itérer | Meilleure qualité |
+| Préciser la techno | Pas d'ambiguïté |
+| Prompt Files | Réutilisable et fiable |
 
 ---
 
