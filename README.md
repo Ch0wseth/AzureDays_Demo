@@ -16,11 +16,12 @@
 7. [DÉMO 3 — Génération de documentation](#-démo-3--génération-de-documentation)
 8. [DÉMO 4 — Modes Copilot (Ask, Edit, Agent)](#-démo-4--modes-copilot-ask-edit-agent)
 9. [DÉMO 5 — Custom Agents, Prompts, Instructions & MCP](#-démo-5--custom-agents-prompts-instructions--mcp)
-10. [Bonnes Pratiques de Prompting](#-bonnes-pratiques-de-prompting-pour-copilot)
-11. [DÉMO 6 — Optimisation tokens (Caveman Mode)](#-démo-6--optimisation-des-tokens-caveman-mode)
-12. [Structure du projet](#-structure-du-projet)
-13. [Checklist Jour-J](#-checklist-jour-j)
-14. [Ressources](#-ressources)
+10. [Gestion du Contexte](#-gestion-du-contexte-dans-github-copilot)
+11. [Bonnes Pratiques de Prompting](#-bonnes-pratiques-de-prompting-pour-copilot)
+12. [DÉMO 6 — Optimisation tokens (Caveman Mode)](#-démo-6--optimisation-des-tokens-caveman-mode)
+13. [Structure du projet](#-structure-du-projet)
+14. [Checklist Jour-J](#-checklist-jour-j)
+15. [Ressources](#-ressources)
 
 ---
 
@@ -632,6 +633,267 @@ Installe l'instruction "nodejs" depuis awesome-copilot
 **Alternative sans Docker** : Montrer le site https://awesome-copilot.github.com avec la recherche et les badges "Install in VS Code" en 1 clic.
 
 
+
+---
+
+## 🧠 Gestion du Contexte dans GitHub Copilot
+
+> ⚠️ **Tout se fait dans VS Code.** Le contexte est ce que Copilot "voit" quand il répond. Plus vous le maîtrisez, plus les réponses sont pertinentes et moins vous consommez de tokens.
+
+---
+
+### Comment Copilot construit son contexte
+
+Copilot n'envoie **PAS** tout votre projet. Voici ce qui est envoyé, par ordre de priorité :
+
+| Source de contexte | Quand c'est envoyé | Comment le contrôler |
+|-------------------|--------------------|--------------------|
+| Le prompt que vous tapez | Toujours | Vous décidez |
+| Les fichiers référencés avec `#file:` | Quand vous les citez | Vous décidez |
+| Le fichier actif (onglet courant) | Toujours en inline / souvent en Chat | Changer d'onglet |
+| Les fichiers ouverts (onglets) | Souvent (comme contexte additionnel) | Fermer les onglets inutiles |
+| L'historique de la conversation | Toujours (dans la même session Chat) | Nouvelle conversation = reset |
+| Les instructions projet `.github/copilot-instructions.md` | Toujours (si le fichier existe) | Éditer le fichier |
+| Les fichiers d'instructions `.github/instructions/*.md` | Selon le `applyTo` glob pattern | Créer/modifier les fichiers |
+| Le workspace indexé | En mode Agent / @workspace | `.copilotignore` pour exclure |
+
+---
+
+### 🔬 Manipulation 1 — Voir le contexte envoyé en temps réel
+
+**Étape 1** — Ouvrir le panneau Output : `Ctrl+Shift+U`
+
+**Étape 2** — Dans le dropdown, sélectionner **"GitHub Copilot Chat"**
+
+**Étape 3** — Ouvrir 5-6 fichiers dans VS Code (app.js, taskService.js, validators.js, index.html, app.css, package.json)
+
+**Étape 4** — Taper un prompt dans Copilot Chat :
+```
+Explique l'architecture de cette app
+```
+
+**Étape 5** — Dans le panneau Output, observer :
+- `request token count: XXXX` — c'est le TOTAL envoyé (prompt + contexte)
+- Vous verrez un chiffre élevé car tous les fichiers ouverts sont potentiellement inclus
+
+**Étape 6** — Fermer TOUS les onglets sauf `taskService.js`. Nouvelle conversation (`+`), même prompt.
+
+**Étape 7** — Comparer le `request token count` : il sera nettement plus bas.
+
+#### 📊 Résultat attendu
+
+| Situation | Tokens IN estimés |
+|-----------|-------------------|
+| 6 fichiers ouverts | ~4000-6000 |
+| 1 seul fichier ouvert | ~1000-1500 |
+| Avec `#file:` explicite | ~800-1200 (le plus précis) |
+
+---
+
+### 🔬 Manipulation 2 — Contrôler le contexte avec `#file:` et `#selection`
+
+#### Variables de contexte disponibles dans Copilot Chat
+
+Taper `#` dans Copilot Chat pour voir la liste complète :
+
+| Variable | Ce qu'elle fait | Exemple |
+|----------|----------------|---------|
+| `#file:chemin` | Ajoute un fichier spécifique au contexte | `#file:src/services/taskService.js` |
+| `#selection` | Ajoute le code sélectionné dans l'éditeur | Sélectionner une fonction → `#selection` |
+| `#editor` | Ajoute le contenu visible dans l'éditeur | `#editor explique ce que je vois` |
+| `#terminalLastCommand` | Ajoute la dernière sortie du terminal | `#terminalLastCommand pourquoi cette erreur ?` |
+| `#terminalSelection` | Ajoute le texte sélectionné dans le terminal | Sélectionner l'erreur → `#terminalSelection` |
+
+#### Étapes à reproduire
+
+**Étape 1** — Taper sans contexte explicite :
+```
+Comment fonctionne la validation ?
+```
+Copilot doit deviner de quelle validation vous parlez → réponse vague ou fausse.
+
+**Étape 2** — Taper avec contexte explicite :
+```
+#file:src/utils/validators.js Comment fonctionne validateEmail() ?
+```
+Copilot a exactement le fichier → réponse précise.
+
+**Étape 3** — Combiner plusieurs fichiers :
+```
+#file:src/services/taskService.js #file:src/routes/tasks.js
+Le endpoint POST /api/tasks valide-t-il correctement les données avant de les passer au service ?
+```
+
+#### 📊 Résultat attendu
+
+| Approche | Pertinence | Tokens IN |
+|----------|-----------|-----------|
+| Sans `#file:` | ⚠️ Variable (dépend des onglets ouverts) | Imprévisible |
+| Avec `#file:` | ✅ Toujours pertinent | Prévisible et minimal |
+
+---
+
+### 🔬 Manipulation 3 — `.copilotignore` pour exclure du contexte
+
+Le fichier `.copilotignore` empêche Copilot d'indexer/envoyer certains fichiers (syntaxe identique à `.gitignore`).
+
+**Étape 1** — Ouvrir `.copilotignore` à la racine du projet (déjà présent) :
+```
+Ctrl+P → .copilotignore → Enter
+```
+
+**Étape 2** — Observer le contenu actuel :
+```
+node_modules/
+dist/
+coverage/
+*.lock
+*.log
+.git/
+```
+
+**Étape 3** — Tester l'impact. En mode Agent, taper :
+```
+@workspace Combien de fichiers JavaScript contient ce projet ?
+```
+Copilot ne comptera PAS les fichiers dans node_modules/ (des milliers de fichiers exclus).
+
+**Étape 4** — Pour démontrer l'impact, commenter temporairement `.copilotignore` (ajouter `#` devant chaque ligne) et relancer la même question. Le temps de réponse sera plus long et les tokens IN bien plus élevés.
+
+**Étape 5** — Remettre `.copilotignore` en place.
+
+#### 📊 Résultat attendu
+
+| Situation | Fichiers indexés | Impact |
+|-----------|-----------------|--------|
+| Avec `.copilotignore` | ~15-20 fichiers projet | Réponses rapides, pertinentes |
+| Sans `.copilotignore` | ~500+ (node_modules inclus) | Lent, bruit, tokens gaspillés |
+
+---
+
+### 🔬 Manipulation 4 — L'historique de conversation comme contexte
+
+Chaque message dans une conversation s'accumule comme contexte pour les suivants.
+
+**Étape 1** — Ouvrir une nouvelle conversation (`+`). Taper 5 prompts successifs :
+```
+Tour 1 : Explique taskService.js
+Tour 2 : Quelles sont les fonctions exportées ?
+Tour 3 : Comment fonctionne la pagination ?
+Tour 4 : Y a-t-il des bugs potentiels ?
+Tour 5 : Ajoute une fonction de recherche par titre
+```
+
+**Étape 2** — Observer dans le panneau Output que le `request token count` **augmente à chaque tour** (l'historique complet est renvoyé).
+
+**Étape 3** — Ouvrir une NOUVELLE conversation (`+`). Taper directement :
+```
+#file:src/services/taskService.js Ajoute une fonction searchByTitle(query) qui filtre les tâches dont le titre contient query (case insensitive). Même style JSDoc que les autres fonctions. Code uniquement.
+```
+
+#### 📊 Résultat attendu
+
+| Approche | Tokens IN au tour 5 | Qualité réponse |
+|----------|---------------------|-----------------|
+| Conversation longue (5 tours) | ~5000-8000 (historique cumulé) | ✅ Bonne (mais coûteuse) |
+| Nouveau chat direct | ~1000-1500 | ✅ Bonne (et économique) |
+
+**Règle** : Si votre prochaine question n'a pas besoin du contexte des questions précédentes → **nouvelle conversation**.
+
+---
+
+### 🔬 Manipulation 5 — Instructions projet automatiques
+
+Les fichiers dans `.github/` injectent du contexte automatiquement à CHAQUE requête.
+
+**Étape 1** — Ouvrir `.github/copilot-instructions.md` :
+```
+Ctrl+P → copilot-instructions → Enter
+```
+
+**Étape 2** — Observer ce qui est écrit : conventions de code, stack technique, style… Ce texte est envoyé en contexte à CHAQUE prompt Copilot.
+
+**Étape 3** — Taper dans Copilot Chat :
+```
+Crée une fonction pour calculer la moyenne d'un tableau de nombres
+```
+Observer : Copilot génère en **ES Module**, avec **JSDoc**, en suivant les conventions du projet — même sans le lui demander dans le prompt.
+
+**Étape 4** — Pour prouver que c'est grâce aux instructions : renommer temporairement le fichier :
+```
+# Dans le terminal VS Code (Ctrl+`)
+mv .github/copilot-instructions.md .github/copilot-instructions.md.bak
+```
+
+**Étape 5** — Nouvelle conversation, même prompt. Observer : le style sera générique (peut-être CommonJS, pas de JSDoc…).
+
+**Étape 6** — Remettre le fichier :
+```
+mv .github/copilot-instructions.md.bak .github/copilot-instructions.md
+```
+
+#### 📊 Résultat attendu
+
+| Situation | ES Modules ? | JSDoc ? | Style Orange Boosted ? |
+|-----------|-------------|---------|----------------------|
+| Avec `copilot-instructions.md` | ✅ Oui | ✅ Oui | ✅ Mentionné |
+| Sans `copilot-instructions.md` | ❌ Aléatoire | ❌ Souvent absent | ❌ Non |
+
+**Coût** : Le fichier d'instructions ajoute ~200-400 tokens IN à chaque requête. Gardez-le concis !
+
+---
+
+### 🔬 Manipulation 6 — Instructions conditionnelles avec `applyTo`
+
+Les fichiers dans `.github/instructions/` peuvent s'appliquer uniquement à certains types de fichiers.
+
+**Étape 1** — Créer un fichier `.github/instructions/tests.instructions.md` :
+```markdown
+---
+applyTo: "tests/**"
+---
+Conventions de tests :
+- Utiliser describe/it (pas test())
+- Noms de tests en français
+- Tester les cas limites : null, undefined, tableau vide, string vide
+- Ajouter un test d'intégration si le service appelle un autre service
+```
+
+**Étape 2** — Ouvrir un fichier de test (`tests/taskService.test.js`) et taper dans Copilot Chat :
+```
+Ajoute des tests pour le cas où on supprime une tâche inexistante
+```
+Observer : Copilot suit les conventions définies (describe/it, français, cas limites).
+
+**Étape 3** — Ouvrir `src/services/taskService.js` et taper le même genre de prompt :
+```
+Ajoute une gestion d'erreur pour la suppression d'une tâche inexistante
+```
+Observer : les instructions de test ne s'appliquent PAS ici (fichier hors du glob `tests/**`).
+
+#### 📊 Résultat attendu
+
+| Fichier ouvert | Instructions tests appliquées ? | Tokens ajoutés |
+|---------------|-------------------------------|----------------|
+| `tests/taskService.test.js` | ✅ Oui | +100 tokens |
+| `src/services/taskService.js` | ❌ Non | 0 tokens |
+
+**Avantage** : Le contexte est injecté SEULEMENT quand c'est pertinent → pas de gaspillage.
+
+---
+
+### Récapitulatif — Maîtrise du contexte
+
+| Levier | Action | Impact tokens |
+|--------|--------|---------------|
+| Onglets ouverts | Fermer les fichiers non pertinents | -50-70% tokens IN |
+| `#file:` explicite | Cibler les fichiers nécessaires | Contexte prévisible |
+| `#selection` | Envoyer juste la sélection | Minimal |
+| `.copilotignore` | Exclure node_modules, build, logs | -80% fichiers indexés |
+| Nouvelle conversation | Reset quand le sujet change | Évite l'accumulation |
+| `copilot-instructions.md` | Conventions auto-injectées | +200-400 tokens (utile) |
+| `instructions/*.md` + `applyTo` | Contexte conditionnel par type de fichier | Minimal et ciblé |
+| Caveman Mode | Réponses ultra-compactes | -50-70% tokens OUT |
 
 ---
 
