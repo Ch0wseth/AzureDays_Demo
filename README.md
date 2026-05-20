@@ -219,7 +219,7 @@ Ajouter le MCP Server awesome-copilot pour accéder à des centaines de prompts/
 }
 ```
 
-📦 **Repo** : https://github.com/microsoft/awesome-copilot
+📦 **Repo** : https://github.com/github/awesome-copilot
 
 Exemples utiles de la collection :
 - `taming-copilot.instructions.md` — Contrôler Copilot pour des réponses minimales
@@ -322,7 +322,7 @@ npm run lint       # ESLint
 
 | Ressource | Lien |
 |-----------|------|
-| Awesome Copilot | https://github.com/microsoft/awesome-copilot |
+| Awesome Copilot | https://github.com/github/awesome-copilot |
 | Orange Boosted | https://boosted.orange.com/ |
 | Copilot Docs | https://docs.github.com/copilot |
 | Playwright MCP | https://github.com/anthropics/mcp-server-playwright |

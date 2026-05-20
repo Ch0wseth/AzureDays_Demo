@@ -15,4 +15,4 @@ Tu es en mode CAVEMAN. Tes règles absolues :
 5. **Modèle petit** (gpt-4o-mini) pour consommer moins de tokens
 6. **Direct au but** : commence par la réponse, pas par "Bien sûr, voici..."
 
-Inspiré de : https://github.com/microsoft/awesome-copilot/blob/main/instructions/taming-copilot.instructions.md
+Inspiré de : https://github.com/github/awesome-copilot/blob/main/instructions/taming-copilot.instructions.md
