@@ -78,12 +78,16 @@ Utilisez ce tableau pour noter la consommation à chaque étape :
 copilot-demo-orange/
 ├── .github/
 │   ├── copilot-instructions.md       # ⚡ Instructions custom Copilot
+│   ├── agents/                       # 🤖 Custom Agents
+│   │   └── caveman-mode.agent.md     # 🦴 Agent low-token (awesome-copilot)
+│   ├── instructions/                 # 📏 Instructions par fichier
+│   │   └── caveman-mode.instructions.md  # 🦴 Instructions terse
 │   └── prompts/                      # 📝 Prompt files réutilisables
 │       ├── generate-route.prompt.md
 │       ├── generate-tests.prompt.md
 │       └── generate-boosted-component.prompt.md
 ├── .vscode/
-│   └── mcp.json                      # 🔌 Config MCP Playwright
+│   └── mcp.json                      # 🔌 MCP: Playwright + Awesome Copilot
 ├── .copilotignore                    # ⚡ Optimisation tokens
 ├── src/
 │   ├── app.js                        # Express app principale
@@ -206,12 +210,19 @@ Lance les tests E2E et montre-moi les résultats
 
 > Le MCP Playwright permet à Copilot de **contrôler un vrai navigateur** !
 
-#### 3.4 Awesome Copilot (ressource communautaire)
+#### 3.4 Awesome Copilot (repo communautaire GitHub)
 
-Ajouter le MCP Server awesome-copilot pour accéder à des centaines de prompts/instructions communautaires :
+Le repo [github/awesome-copilot](https://github.com/github/awesome-copilot) est une collection communautaire de centaines de :
+- **Agents** — Personas IA spécialisés (`.github/agents/*.agent.md`)
+- **Instructions** — Standards de code par techno (`.github/instructions/*.instructions.md`)
+- **Prompts** — Tâches réutilisables (`.github/prompts/*.prompt.md`)
+
+##### Installation dans le projet (3 méthodes)
+
+**Méthode 1 — MCP Server** (recherche + installation automatique via Docker) :
 
 ```json
-// Ajouter dans .vscode/mcp.json → servers
+// Déjà configuré dans .vscode/mcp.json
 "awesome-copilot": {
   "type": "stdio",
   "command": "docker",
@@ -219,12 +230,24 @@ Ajouter le MCP Server awesome-copilot pour accéder à des centaines de prompts/
 }
 ```
 
-📦 **Repo** : https://github.com/github/awesome-copilot
+En mode Agent, demander : `Cherche et installe l'instruction "nodejs" depuis awesome-copilot`
 
-Exemples utiles de la collection :
-- `taming-copilot.instructions.md` — Contrôler Copilot pour des réponses minimales
-- `playwright-tester.chatmode.md` — Mode chat spécialisé tests E2E
-- `principal-software-engineer.chatmode.md` — Mode architecte senior
+**Méthode 2 — Badges "Install in VS Code"** (1-clic) :
+
+Aller sur https://github.com/github/awesome-copilot et cliquer les badges ![Install](https://img.shields.io/badge/VS_Code-Install-0098FF?style=flat-square) à côté de chaque ressource.
+
+**Méthode 3 — Copie manuelle** (déjà fait pour cette démo) :
+
+Les fichiers caveman mode sont copiés dans :
+- `.github/agents/caveman-mode.agent.md`
+- `.github/instructions/caveman-mode.instructions.md`
+
+##### Ressources intégrées dans cette démo
+
+| Fichier | Source | Usage |
+|---------|--------|-------|
+| `caveman-mode.agent.md` | [agents/caveman-mode](https://github.com/github/awesome-copilot/blob/main/agents/caveman-mode.agent.md) | Optimisation tokens |
+| `caveman-mode.instructions.md` | [instructions/caveman-mode](https://github.com/github/awesome-copilot/blob/main/instructions/caveman-mode.instructions.md) | S'applique à tous les fichiers |
 
 ---
 
@@ -256,26 +279,27 @@ Au lieu de laisser Copilot scanner tout le projet :
 
 → Copilot n'envoie que ce fichier en contexte = **beaucoup moins de tokens**
 
-#### 4.3 Mode "Caveman" (inspiré de Awesome Copilot)
+#### 4.3 Mode "Caveman" (depuis [github/awesome-copilot](https://github.com/github/awesome-copilot))
 
-Ajouter ces instructions dans `.github/copilot-instructions.md` pour forcer Copilot à être minimaliste :
+Le **Caveman Mode** est un agent + instruction directement issus du repo communautaire `github/awesome-copilot`.
+Il est inclus dans ce projet dans :
+- `.github/agents/caveman-mode.agent.md` — Agent custom sélectionnable dans Copilot Chat
+- `.github/instructions/caveman-mode.instructions.md` — Instruction applicable à tous les fichiers
 
-```markdown
-## Mode Caveman — Optimisation Tokens
-
-- Répondre de manière ULTRA concise (max 3 phrases pour les explications)
-- Code UNIQUEMENT si demandé explicitement
-- Pas de commentaires dans le code généré sauf si demandé
-- Pas de disclaimers, pas d'alternatives, pas de "voici ce que je recommande"
-- Réponse directe, sans reformulation de la question
-- Utiliser le minimum de tokens possible pour transmettre l'information
-```
-
-> 💡 **Inspiré de** [`taming-copilot.instructions.md`](https://github.com/microsoft/awesome-copilot/blob/main/instructions/taming-copilot.instructions.md) — Instructions communautaires pour garder Copilot sous contrôle.
+**Principe** : Réponses ultra-concises, style "homme des cavernes" :
+- "Me fix code" au lieu de "I will fix the code for you"
+- Phrases de 3-6 mots max
+- Cible **50-70% moins de tokens** en sortie
+- Code toujours propre, seules les réponses chat sont terse
+- Pas de fillers : "Great question", "Here's what I did"...
 
 **Démo comparative** :
-1. **Sans** mode caveman : demander "Explique la fonction createTask"
-2. **Avec** mode caveman : même question → **observer la réduction de tokens**
+1. **Sans** caveman : sélectionner mode "Agent" par défaut → demander "Explique la fonction createTask"
+2. **Avec** caveman : sélectionner l'agent "Caveman Mode" → même question → **observer la réduction**
+
+> 💡 **Installation directe** : [![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Agent-0098FF?logo=visualstudiocode)](https://aka.ms/awesome-copilot/install/agent?url=vscode%3Achat-agent%2Finstall%3Furl%3Dhttps%3A%2F%2Fraw.githubusercontent.com%2Fgithub%2Fawesome-copilot%2Fmain%2Fagents%2Fcaveman-mode.agent.md)
+> 
+> Ou via le MCP awesome-copilot : demander à l'agent de chercher et installer "caveman"
 
 #### 4.4 Prompt Files pour réutilisation
 
@@ -322,10 +346,12 @@ npm run lint       # ESLint
 
 | Ressource | Lien |
 |-----------|------|
-| Awesome Copilot | https://github.com/github/awesome-copilot |
+| Awesome Copilot (repo) | https://github.com/github/awesome-copilot |
+| Awesome Copilot (site) | https://awesome-copilot.github.com |
+| Caveman Mode Agent | https://github.com/github/awesome-copilot/blob/main/agents/caveman-mode.agent.md |
 | Orange Boosted | https://boosted.orange.com/ |
 | Copilot Docs | https://docs.github.com/copilot |
-| Playwright MCP | https://github.com/anthropics/mcp-server-playwright |
+| Playwright MCP | https://www.npmjs.com/package/@playwright/mcp |
 | Copilot Custom Instructions | https://docs.github.com/copilot/customizing-copilot |
 
 ---
