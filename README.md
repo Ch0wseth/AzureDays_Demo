@@ -809,3 +809,9 @@ git checkout main
 ```
 
 Bonne démo ! 🟠
+
+---
+
+## 📚 Pour aller plus loin
+
+- [GitHub Copilot CLI for Beginners](https://github.com/github/copilot-cli-for-beginners) — guide officiel pour débuter avec Copilot CLI.
