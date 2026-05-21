@@ -1,9 +1,9 @@
-# AGENTS.md — Orange Copilot Demo
+# AGENTS.md — Orange Copilot Lab
 
 This file is the primary instructions source read automatically by the **GitHub Copilot CLI** (`copilot`) at the start of every session in this repository.
 
 ## Project Context
-JavaScript demo application using **Orange Boosted 5.3** (Bootstrap-based design system) to showcase GitHub Copilot CLI capabilities in the terminal.
+JavaScript lab application using **Orange Boosted 5.3** (Bootstrap-based design system) — used by attendees to practice GitHub Copilot CLI capabilities in the terminal.
 
 ## Code Style
 - Use ES Modules (`import/export`)

@@ -1,7 +1,7 @@
 {
   "name": "copilot-demo-orange",
   "version": "1.0.0",
-  "description": "Demo app showcasing GitHub Copilot features with Orange Boosted UI",
+  "description": "Hands-on lab app for practicing GitHub Copilot CLI features with Orange Boosted UI",
   "main": "src/app.js",
   "type": "module",
   "scripts": {
