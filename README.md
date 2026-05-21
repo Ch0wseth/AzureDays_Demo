@@ -129,6 +129,12 @@ git clone https://github.com/Ch0wseth/AzureDays_Demo.git
 cd AzureDays_Demo
 ```
 
+### Étape 1bis — Basculer sur la branche `ghcp-cli`
+
+```bash
+git checkout ghcp-cli
+```
+
 ### Étape 2 — Installer les dépendances de l'app
 
 ```bash
