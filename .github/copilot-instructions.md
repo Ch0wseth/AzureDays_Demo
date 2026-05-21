@@ -31,5 +31,5 @@ This is a JavaScript demo application using **Orange Boosted 5.3** (Bootstrap-ba
 - Keep functions small and focused (< 30 lines)
 - Use descriptive file names to help Copilot context
 - Leverage `#file` references in prompts
-- Use `.copilotignore` to exclude noise
+- Use `.copilotignore` to exclude noise (legacy — préférer les Content Exclusions org-level)
 - Use "Caveman Mode" agent for minimal token responses (see `.github/agents/`)

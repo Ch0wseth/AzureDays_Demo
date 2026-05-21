@@ -1,4 +1,8 @@
 # Token optimization - exclude files that pollute Copilot context
+# Note: .copilotignore is un mécanisme legacy. L'approche recommandée est
+# d'utiliser les settings VS Code : "github.copilot.chat.codeGeneration.useExcludeSettings"
+# ou la configuration org-level via Copilot Content Exclusions dans GitHub Settings.
+# Ce fichier reste fonctionnel pour la rétro-compatibilité.
 node_modules/
 dist/
 coverage/
