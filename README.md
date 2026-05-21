@@ -1,4 +1,4 @@
-# 🤖 GitHub Copilot Demo — Orange Boosted
+# 🤖 GitHub Copilot Lab — Orange Boosted
 
 > **Guide 100% reproductible** — Suivez ce README pas à pas pour réaliser la lab complète.
 > Chaque étape indique **exactement** ce qu'il faut faire, taper, et observer.
